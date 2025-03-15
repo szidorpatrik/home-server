@@ -24,7 +24,7 @@ services:
       FTLCONF_dns_listeningMode: 'all'
     volumes:
       # Persist Pi-hole's databases and configuration
-      - './etc-pihole:/etc/pihole'
+      - './pihole/etc-pihole:/etc/pihole'
       # Uncomment if you have custom dnsmasq config files (optional)
       #- './etc-dnsmasq.d:/etc/dnsmasq.d'
     cap_add:
