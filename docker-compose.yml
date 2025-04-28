@@ -9,6 +9,9 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/certs:/etc/nginx/certs
     restart: unless-stopped
+    depends_on:
+      pihole: 
+        condition: service_healthy
     networks:
       - pihole_network
 
@@ -30,23 +33,23 @@ services:
     networks:
       - pihole_network
 
-#  sftpgo:
-#    container_name: sftpgo
-#    image: drakkan/sftpgo:latest
-#    ports:
-#      - "2022:2022/tcp" # SFTP
-#      - "2121:2121/tcp" # FTP/FTPS
-#      - "8080:8080/tcp" # Web UI (will be reverse proxied by Nginx)
-#      - "50000-50100:50000-50100/tcp" # Passive FTP range
-#    environment:
-#      - SFTPGO_FTPD__BINDINGS__0__PORT=${SFTPGO_FTPD_PORT}
-#      - SFTPGO_WEBDAV__BINDINGS__0__PORT=0 # Disable WebDAV if not needed
-#    volumes:
-#      - ./sftpgo/data:/srv/sftpgo
-#      - ./sftpgo/home:/var/lib/sftpgo
-#    restart: unless-stopped
-#    networks:
-#      - pihole_network
+  sftpgo:
+    container_name: sftpgo
+    image: drakkan/sftpgo:latest
+    ports:
+      - "2022:2022/tcp" # SFTP
+      - "2121:2121/tcp" # FTP/FTPS
+      - "8080:8080/tcp" # Web UI (will be reverse proxied by Nginx)
+      - "50000-50100:50000-50100/tcp" # Passive FTP range
+    environment:
+      - SFTPGO_FTPD__BINDINGS__0__PORT=${SFTPGO_FTPD_PORT}
+      - SFTPGO_WEBDAV__BINDINGS__0__PORT=0 # Disable WebDAV if not needed
+    volumes:
+      - ./sftpgo/data:/srv/sftpgo
+      - ./sftpgo/home:/var/lib/sftpgo
+    restart: unless-stopped
+    networks:
+      - pihole_network
 
 networks:
   pihole_network:
