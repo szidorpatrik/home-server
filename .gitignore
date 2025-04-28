@@ -1,4 +1,6 @@
 .env
 etc-pihole/
+sftpgo/data/
+sftpgo/home/
 *.crt
 *.key
