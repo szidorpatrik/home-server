@@ -10,7 +10,7 @@ services:
       - ./nginx/certs:/etc/nginx/certs
     restart: unless-stopped
     depends_on:
-      pihole: 
+      pihole:
         condition: service_healthy
     networks:
       - pihole_network
@@ -37,14 +37,14 @@ services:
     container_name: sftpgo
     image: drakkan/sftpgo:latest
     ports:
-      - "${SFTPGO_SFTP_PORT}:${SFTPGO_SFTP_PORT}/tcp" # SFTP
-      - "${SFTPGO_WEBDAV_PORT}:${SFTPGO_WEBDAV_PORT}/tcp" # WebDav
+      - "${SFTPGO_SFTP_PORT}:${SFTPGO_SFTP_PORT}/tcp"
+      - "${SFTPGO_WEBDAV_PORT}:${SFTPGO_WEBDAV_PORT}/tcp"
     environment:
       - SFTPGO_WEBDAVD__BINDINGS__0__PORT=${SFTPGO_WEBDAV_PORT}
-      - SFTPGO_WEBDAVD__BINDINGS__0__ENABLE_HTTPS=true
-      - SFTPGO_WEBDAVD__BINDINGS__0__PREFIX=/webdav
-      - SFTPGO_WEBDAVD__BINDINGS__0__CERTIFICATE_FILE=/var/lib/sftpgo/wildcard.szipat.lan.crt
-      - SFTPGO_WEBDAVD__BINDINGS__0__CERTIFICATE_KEY_FILE=/var/lib/sftpgo/wildcard.szipat.lan.key
+      - SFTPGO_WEBDAVD__BINDINGS__0__PREFIX=${SFTPGO_WEBDAV_PREFIX}
+      - SFTPGO_WEBDAVD__BINDINGS__0__ENABLE_HTTPS=${SFTPGO_WEBDAVD_ENABLE_HTTPS}
+      - SFTPGO_WEBDAVD__BINDINGS__0__CERTIFICATE_FILE=${SFTPGO_WEBDAVD_CERTIFICATE_FILE}
+      - SFTPGO_WEBDAVD__BINDINGS__0__CERTIFICATE_KEY_FILE=${SFTPGO_WEBDAVD_CERTIFICATE_KEY_FILE}
     volumes:
       - ./sftpgo/data:/srv/sftpgo
       - ./sftpgo/home:/var/lib/sftpgo
