@@ -37,13 +37,14 @@ services:
     container_name: sftpgo
     image: drakkan/sftpgo:latest
     ports:
-      - "2022:2022/tcp" # SFTP
-      - "2121:2121/tcp" # FTP/FTPS
-      - "8080:8080/tcp" # Web UI (will be reverse proxied by Nginx)
-      - "50000-50100:50000-50100/tcp" # Passive FTP range
+      - "${SFTPGO_SFTP_PORT}:${SFTPGO_SFTP_PORT}/tcp" # SFTP
+      - "${SFTPGO_WEBDAV_PORT}:${SFTPGO_WEBDAV_PORT}/tcp" # WebDav
     environment:
-      - SFTPGO_FTPD__BINDINGS__0__PORT=${SFTPGO_FTPD_PORT}
-      - SFTPGO_WEBDAV__BINDINGS__0__PORT=0 # Disable WebDAV if not needed
+      - SFTPGO_WEBDAVD__BINDINGS__0__PORT=${SFTPGO_WEBDAV_PORT}
+      - SFTPGO_WEBDAVD__BINDINGS__0__ENABLE_HTTPS=true
+      - SFTPGO_WEBDAVD__BINDINGS__0__PREFIX=/webdav
+      - SFTPGO_WEBDAVD__BINDINGS__0__CERTIFICATE_FILE=/var/lib/sftpgo/wildcard.szipat.lan.crt
+      - SFTPGO_WEBDAVD__BINDINGS__0__CERTIFICATE_KEY_FILE=/var/lib/sftpgo/wildcard.szipat.lan.key
     volumes:
       - ./sftpgo/data:/srv/sftpgo
       - ./sftpgo/home:/var/lib/sftpgo
