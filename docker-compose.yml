@@ -38,7 +38,6 @@ services:
     image: drakkan/sftpgo:latest
     ports:
       - "${SFTPGO_SFTP_PORT}:${SFTPGO_SFTP_PORT}/tcp"
-      - "${SFTPGO_WEBDAV_PORT}:${SFTPGO_WEBDAV_PORT}/tcp"
     environment:
       - SFTPGO_WEBDAVD__BINDINGS__0__PORT=${SFTPGO_WEBDAV_PORT}
       - SFTPGO_WEBDAVD__BINDINGS__0__PREFIX=${SFTPGO_WEBDAV_PREFIX}
