@@ -54,7 +54,7 @@ services:
       - SFTPGO_WEBDAVD__BINDINGS__0__CERTIFICATE_FILE=${CERTIFICATE_FILE}
       - SFTPGO_WEBDAVD__BINDINGS__0__CERTIFICATE_KEY_FILE=${CERTIFICATE_KEY_FILE}
     volumes:
-      - ./sftpgo/data:/srv/sftpgo
+      - ./sftpgo/wd-red/sftpgo:/srv/sftpgo
       - ./sftpgo/home:/var/lib/sftpgo
     restart: unless-stopped
     networks:
