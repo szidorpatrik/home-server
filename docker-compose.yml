@@ -48,6 +48,7 @@ services:
       - './nextcloud/config:/var/www/html/config'
       - './nextcloud/apps:/var/www/html/apps'
       - './nextcloud/data:/var/www/html/data'
+      - './nextcloud/mpm_prefork.conf:/etc/apache2/mods-available/mpm_prefork.conf:ro'
     depends_on:
       caddy:
         condition: service_started
