@@ -12,3 +12,8 @@ pihole.szipat.lan {
     redir / /admin 301
     reverse_proxy /* pihole:80
 }
+
+nextcloud.szipat.lan {
+    tls /etc/caddy/certs/wildcard.szipat.lan.crt /etc/caddy/certs/wildcard.szipat.lan.key
+    reverse_proxy /* nextcloud:80
+}

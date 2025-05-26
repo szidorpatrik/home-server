@@ -16,7 +16,7 @@ services:
       - SYS_NICE
     networks:
       - pihole_network
-  
+
   caddy:
     container_name: caddy
     image: caddy:latest
@@ -30,11 +30,46 @@ services:
       - './caddy/certs:/etc/caddy/certs:ro'
       - './caddy/data:/data'
       - './caddy/config:/config'
-    networks:
-      - pihole_network
     depends_on:
       - pihole
-  
+    networks:
+      - pihole_network
+
+  nextcloud:
+    container_name: nextcloud
+    image: nextcloud:latest
+    restart: unless-stopped
+    environment:
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS}
+      - OVERWRITEHOST=${OVERWRITEHOST}
+      - OVERWRITEPROTOCOL=${OVERWRITEPROTOCOL}
+      - TZ=${TZ}
+    volumes:
+      - './nextcloud/config:/var/www/html/config'
+      - './nextcloud/apps:/var/www/html/apps'
+      - './nextcloud/data:/var/www/html/data'
+    depends_on:
+      caddy:
+        condition: service_started
+      mariadb:
+        condition: service_started
+    networks:
+      - pihole_network
+
+  mariadb:
+    container_name: mariadb
+    restart: unless-stopped
+    image: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - ./mariadb:/var/lib/mysql
+    networks:
+      - pihole_network
+
 networks:
   pihole_network:
     driver: bridge

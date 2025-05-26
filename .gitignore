@@ -1,6 +1,15 @@
 .env
+
 etc-pihole/
-sftpgo/data/
-sftpgo/home/
+
+sftpgo/data/*
+sftpgo/home/*
+
 *.crt
 *.key
+
+nextcloud/apps/*
+nextcloud/config/*
+nextcloud/data/*
+
+mariadb/*
