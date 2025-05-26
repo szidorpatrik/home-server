@@ -1,23 +1,8 @@
 services:
-  nginx:
-    container_name: nginx
-    image: nginx:latest
-    ports:
-      - "80:80/tcp"
-      - "443:443/tcp"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/certs:/etc/nginx/certs
-    restart: unless-stopped
-    depends_on:
-      pihole:
-        condition: service_healthy
-    networks:
-      - pihole_network
-
   pihole:
     container_name: pihole
     image: pihole/pihole:latest
+    restart: unless-stopped
     ports:
       - "53:53/tcp"
       - "53:53/udp"
@@ -29,37 +14,27 @@ services:
       - './pihole/etc-pihole:/etc/pihole'
     cap_add:
       - SYS_NICE
-    restart: unless-stopped
     networks:
       - pihole_network
-
-  sftpgo:
-    container_name: sftpgo
-    image: drakkan/sftpgo:latest
+  
+  caddy:
+    container_name: caddy
+    image: caddy:latest
+    restart: unless-stopped
     ports:
-      - "${SFTPGO_SFTP_PORT}:${SFTPGO_SFTP_PORT}/tcp"
-    environment:
-      #Http server
-      - SFTPGO_HTTPD__BINDINGS__0__PORT=${SFTPGO_HTTPD_PORT}
-      - SFTPGO_HTTPD__BINDINGS__0__ENABLE_HTTPS=${SFTPGO_HTTPD_ENABLE_HTTPS}
-      - SFTPGO_HTTPD__BINDINGS__0__CERTIFICATE_FILE=${CERTIFICATE_FILE}
-      - SFTPGO_HTTPD__BINDINGS__0__CERTIFICATE_KEY_FILE=${CERTIFICATE_KEY_FILE}
-      - SFTPGO_HTTPD__BINDINGS__0__IDLE_TIMEOUT=${SFTPGO_HTTPD_IDLE_TIMEOUT}
-      - SFTPGO_HTTPD__BINDINGS__0__READ_TIMEOUT=${SFTPGO_HTTPD_READ_TIMEOUT}
-      - SFTPGO_HTTPD__BINDINGS__0__WRITE_TIMEOUT=${SFTPGO_HTTPD_WRITE_TIMEOUT}
-      #Webdav
-      - SFTPGO_WEBDAVD__BINDINGS__0__PORT=${SFTPGO_WEBDAV_PORT}
-      - SFTPGO_WEBDAVD__BINDINGS__0__PREFIX=${SFTPGO_WEBDAV_PREFIX}
-      - SFTPGO_WEBDAVD__BINDINGS__0__ENABLE_HTTPS=${SFTPGO_WEBDAVD_ENABLE_HTTPS}
-      - SFTPGO_WEBDAVD__BINDINGS__0__CERTIFICATE_FILE=${CERTIFICATE_FILE}
-      - SFTPGO_WEBDAVD__BINDINGS__0__CERTIFICATE_KEY_FILE=${CERTIFICATE_KEY_FILE}
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
     volumes:
-      - ./sftpgo/wd-red/sftpgo:/srv/sftpgo
-      - ./sftpgo/home:/var/lib/sftpgo
-    restart: unless-stopped
+      - './caddy/Caddyfile:/etc/caddy/Caddyfile'
+      - './caddy/certs:/etc/caddy/certs:ro'
+      - './caddy/data:/data'
+      - './caddy/config:/config'
     networks:
       - pihole_network
-
+    depends_on:
+      - pihole
+  
 networks:
   pihole_network:
     driver: bridge
