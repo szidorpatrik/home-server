@@ -24,3 +24,6 @@ nextcloud/data/*
 mariadb/*
 !mariadb/my.cnf
 #---------------
+jellyfin/cache/*
+jellyfin/config/*
+#---------------

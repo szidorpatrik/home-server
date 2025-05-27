@@ -86,6 +86,27 @@ services:
     networks:
       - pihole_network
 
+  jellyfin:
+    container_name: jellyfin
+    image: jellyfin/jellyfin:latest
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - './jellyfin/config:/config'
+      - './jellyfin/cache:/cache'
+      - './jellyfin/media:/media'
+    ports:
+      - '8096:8096'
+    networks:
+      - pihole_network
+    depends_on:
+      - caddy
+    mem_limit: 2048m
+    mem_reservation: 1024m
+
 networks:
   pihole_network:
     driver: bridge

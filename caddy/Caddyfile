@@ -21,3 +21,8 @@ nextcloud.szipat.lan {
     tls /etc/caddy/certs/wildcard.szipat.lan.crt /etc/caddy/certs/wildcard.szipat.lan.key
     reverse_proxy /* nextcloud:80
 }
+
+jellyfin.szipat.lan {
+    tls /etc/caddy/certs/wildcard.szipat.lan.crt /etc/caddy/certs/wildcard.szipat.lan.key
+    reverse_proxy jellyfin:8096
+}
