@@ -15,8 +15,6 @@ nextcloud/apps/*
 !nextcloud/apps
 
 nextcloud/config/*
-!nextcloud/config
-!nextcloud/config/config.php
 
 nextcloud/data/*
 !nextcloud/data

@@ -74,7 +74,7 @@ docker exec -it pihole pihole setpassword
 
 Follow the prompts to set a new password.
 
-Now configure your local dns records under Settings -> Local DNS Records ([http://your.server.ip.address/admin/settings/dnsrecords](https://pihole.szipat.lan/admin/settings/dnsrecords)) \
+Now configure your local dns records under Settings -> Local DNS Records ([http://your.server.ip.address/admin/settings/dnsrecords](https://pihole.your-domain.lan/admin/settings/dnsrecords)) \
 **Don't forget to set your router's and/or client's primary dns to your server's ip address!**
 
 Test the dns records with `nslookup`.
