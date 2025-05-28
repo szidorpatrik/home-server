@@ -162,6 +162,12 @@ If you want to use HTTPS, then:
   }
   ```
 
+Start Caddy:
+
+```sh
+docker compose up -d caddy
+```
+
 ## MariaDB Configuration
 
 MariaDB settings are customized in the [my.cnf](./mariadb/my.cnf) file (mounted as `./mariadb:/var/lib/mysql` in the container). \
