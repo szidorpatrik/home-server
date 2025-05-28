@@ -191,9 +191,19 @@ docker compose up -d mariadb
 
 ## Nextcloud Redis Setup
 
-Nextcloud uses Redis for caching to improve performance. Ensure the `REDIS_HOST` variable in your **[.env](./.env)** file matches the Redis container name (`redis`).
+This setup is already configured to use Redis.
 
-Then, add/modify the following to your Nextcloud configuration file (**[config.php](./nextcloud/config/config.php)**) to enable Redis:
+Ensure the `REDIS_HOST` variable in your **[.env](./.env)** file matches the Redis container name (`redis`).
+
+Start Nextcloud and wait until it initializes:
+
+```sh
+docker compose up -d nextcloud
+```
+
+By default this step is optional, but if the `./nextcloud/config/config.php` misses these lines then:
+
+Add/modify the following to your Nextcloud configuration file (**[config.php](./nextcloud/config/config.php)**) to enable Redis:
 
 ```php
 'memcache.local' => '\\OC\\Memcache\\Redis',
@@ -203,8 +213,6 @@ Then, add/modify the following to your Nextcloud configuration file (**[config.p
     'port' => 6379,
 ],
 ```
-
-In the [docker-compose.yml](./docker-compose.yml) uncomment the redis container, the `environment` and `depends_on` sections which mentions redis.
 
 Restart nextcloud:
 
@@ -261,9 +269,22 @@ Adjust based on your system’s memory and traffic.
 
 ## Nextcloud web configuration
 
-Create a user.
+Create a user and wait for the installation process, no further actions needed.
 
-When installing nextcloud, select MariaDB and write the password for the connection located in the [`.env`](./.env) file `MYSQL_PASSWORD`.
+If it want's you to setup manually, then slect MariaDB as database and fill in the form with the corresponding variables in `Nextcloud` and `MariaDB` section in the [.env](./.env) file.
+
+```conf
+...
+#------Nextcloud------
+...
+MYSQL_HOST=mariadb
+#------MariaDB------
+MYSQL_ROOT_PASSWORD=root
+MYSQL_DATABASE=ncdb
+MYSQL_USER=nextcloud
+MYSQL_PASSWORD=nextcloud
+...
+```
 
 ## Jellyfin setup
 

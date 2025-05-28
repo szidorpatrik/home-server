@@ -4,8 +4,7 @@ services:
     image: pihole/pihole:latest
     restart: unless-stopped
     ports:
-      # Remove '80:80' after Pihole and Caddy are configured
-      - '80:80'
+      
       - '53:53/tcp'
       - '53:53/udp'
     environment:
@@ -37,26 +36,24 @@ services:
     networks:
       - pihole_network
 
-  # Uncomment if you want to use Redis and nextcloud/config/config.php is configured to use it
-  #redis:
-  #  image: redis:alpine
-  #  container_name: redis
-  #  restart: unless-stopped
-  #  volumes:
-  #    - './redis:/data'
-  #  mem_limit: 2400m
-  #  mem_reservation: 2200m
-  #  networks:
-  #    - pihole_network
+  redis:
+    container_name: redis:alpine
+    restart: unless-stopped
+    image: redis:alpine
+    volumes:
+      - './redis:/data'
+    mem_limit: 2400m
+    mem_reservation: 2200m
+    networks:
+      - pihole_network
 
   nextcloud:
-    image: nextcloud:latest
     container_name: nextcloud
+    image: nextcloud:latest
     restart: unless-stopped
     environment:
       - TZ=${TZ}
-      # Uncomment if you want to use Redis and nextcloud/config/config.php is configured to use it
-      #- REDIS_HOST=${REDIS_HOST}
+      - REDIS_HOST=${REDIS_HOST}
       - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS}
       - OVERWRITEHOST=${OVERWRITEHOST}
       - OVERWRITEPROTOCOL=${OVERWRITEPROTOCOL}
@@ -76,16 +73,15 @@ services:
         condition: service_started
       mariadb:
         condition: service_started
-      # Uncomment if you want to use Redis and nextcloud/config/config.php is configured to use it
-      #redis:
-      #  condition: service_started
+      redis:
+        condition: service_started
     networks:
       - pihole_network
 
   mariadb:
-    image: mariadb
     container_name: mariadb
     restart: unless-stopped
+    image: mariadb
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
