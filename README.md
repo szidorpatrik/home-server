@@ -183,10 +183,10 @@ tmp_table_size=64M
 max_connections=50
 ```
 
-After creating or modifying the file, restart the MariaDB container if it runs already to apply the changes:
+Start MariaDB:
 
 ```sh
-docker compose restart mariadb
+docker compose up -d mariadb
 ```
 
 ## Nextcloud Redis Setup
