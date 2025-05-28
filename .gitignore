@@ -1,5 +1,6 @@
 #------------------------
 .env
+docker-compose.yml
 # Pihole
 etc-pihole/
 # Caddy
