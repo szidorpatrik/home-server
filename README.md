@@ -90,7 +90,17 @@ Follow the prompts to set a new password.
 Now configure your local dns records under Settings -> Local DNS Records ([http://your.server.ip.address/admin/settings/dnsrecords](https://pihole.your-domain.lan/admin/settings/dnsrecords)) \
 **Don't forget to set your router's and/or client's primary dns to your server's ip address!**
 
-Test the dns records with `nslookup`.
+| **Domain**                 | **IP Address**         |
+|:---------------------------|:-----------------------|
+| pihole.your-domain.lan     | your.server.ip.address |
+| jellyfin.your-domain.lan   | your.server.ip.address |
+| nextcloud.your-domain.lan  | your.server.ip.address |
+
+Test the dns records with:
+
+- `nslookup pihole.your-domain.lan`
+- `nslookup jellyfin.your-domain.lan`
+- `nslookup nextcloud.your-domain.lan`
 
 If they resolve then remove the `'80:80'` port from pihole container inside the [docker-compose.yml](./docker-compose.yml), because `Caddy` will use it and run:
 
