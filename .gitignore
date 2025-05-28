@@ -11,17 +11,14 @@ caddy/certs/*
 #---------------
 redis/*
 #---------------
-nextcloud/apps/*
-!nextcloud/apps
-
-nextcloud/config/*
-
-nextcloud/data/*
-!nextcloud/data
+nextcloud/apps
+nextcloud/config
+nextcloud/data
 #---------------
 mariadb/*
 !mariadb/my.cnf
 #---------------
-jellyfin/cache/*
-jellyfin/config/*
-#---------------
+jellyfin/cache
+jellyfin/config
+jellyfin/media
+#---------------TODO Remove sym links from version control: git rm jellyfin/media nextcloud/data
