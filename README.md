@@ -56,15 +56,6 @@ ln -s /your/data/dir /your/path/to/home-server/nextcloud/data
 ln -s /mnt/external-drive/nextcloud /home/user/home-server/nextcloud/data
 ```
 
-### Jellyfin media (Symlink)
-
-```sh
-ln -s /your/data/nextcloud/user/files/media-dir /your/path/to/home-server/jellyfin/media
-
-#Example if the media dir is 'Movies':
-ln -s /mnt/external-drive/nextcloud/user/files/Movies /home/user/home-server/jellyfin/media
-```
-
 ## DNS (Pihole)
 
 Run the pihole container:
@@ -132,9 +123,11 @@ If you want to use only HTTP, then:
   }
   ```
 
-- Edit [`.env`](./.env) Nextcloud section `OVERWRITEPROTOCOL=https` to:
+- Edit [`.env`](./.env) Nextcloud section `OVERWRITEPROTOCOL=https` and update `your-domain` to:
 
   ```conf
+  NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.your-domain.lan
+  OVERWRITEHOST=nextcloud.your-domain.lan
   OVERWRITEPROTOCOL=http
   ```
 
