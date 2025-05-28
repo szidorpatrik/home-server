@@ -306,3 +306,35 @@ docker compose down
 ```sh
 docker compose down -v
 ```
+
+## How to manually copy files to nextcloud
+
+Copy your files and dirs to your nextcloud user dir:
+
+```sh
+sudo cp -r /your/files /mnt/external/drive/nextcloud/user
+```
+
+Change the owner of the files:
+
+```sh
+sudo chown -R www-data:www-data /mnt/external/drive/nextcloud/user
+```
+
+Add permissions for everything for the owner and the group, read and execute for others:
+
+> Nextcloud will revert the permissions for the `/mnt/external/drive/nextcloud` dir after a while with `770` \
+> You can revert the permissions to original manually as well
+> For debugging purposes this command is useful
+
+```sh
+sudo chmod -R 775 /mnt/external/drive/nextcloud/user
+```
+
+Update nextcloud's cache with scanning for files:
+
+```sh
+docker exec -u www-data nextcloud php occ files:scan -all
+```
+
+Wait for the process to finish, then reload nextclouds files page and the files should appear.
