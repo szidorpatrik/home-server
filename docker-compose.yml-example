@@ -39,9 +39,9 @@ services:
 
   # Uncomment if you want to use Redis and nextcloud/config/config.php is configured to use it
   #redis:
+  #  image: redis:alpine
   #  container_name: redis
   #  restart: unless-stopped
-  #  image: redis:latest
   #  volumes:
   #    - './redis:/data'
   #  mem_limit: 2400m
@@ -50,8 +50,8 @@ services:
   #    - pihole_network
 
   nextcloud:
-    container_name: nextcloud
     image: nextcloud:latest
+    container_name: nextcloud
     restart: unless-stopped
     environment:
       - TZ=${TZ}
@@ -83,9 +83,9 @@ services:
       - pihole_network
 
   mariadb:
+    image: mariadb
     container_name: mariadb
     restart: unless-stopped
-    image: mariadb
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
