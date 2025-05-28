@@ -416,7 +416,6 @@ expose_php = On
 ; Maximum execution time of each script, in seconds
 ; https://php.net/max-execution-time
 ; Note: This directive is hardcoded to 0 for the CLI SAPI
-;THIS WAS MODIFIED BY ERECTUS
 max_execution_time = 3600
 
 ; Maximum amount of time each script may spend parsing request data. It's a good
@@ -443,7 +442,6 @@ max_input_time = 60
 
 ; Maximum amount of memory a script may consume
 ; https://php.net/memory-limit
-;THIS WAS MODIFIED BY ERECTUS
 memory_limit = 512M
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -712,7 +710,6 @@ auto_globals_jit = On
 ; Its value may be 0 to disable the limit. It is ignored if POST data reading
 ; is disabled through enable_post_data_reading.
 ; https://php.net/post-max-size
-;THIS WAS MODIFIED BY ERECTUS
 post_max_size = 0
 
 ; Automatically add files before PHP document.
@@ -865,11 +862,9 @@ file_uploads = On
 
 ; Maximum allowed size for uploaded files.
 ; https://php.net/upload-max-filesize
-;THIS WAS MODIFIED BY ERECTUS
 upload_max_filesize = 0
 
 ; Maximum number of files that can be uploaded via a single request
-;THIS WAS MODIFIED BY ERECTUS
 max_file_uploads = 200
 
 ;;;;;;;;;;;;;;;;;;

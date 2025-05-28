@@ -8,39 +8,75 @@ This repository contains a home server setup with self-hosted:
 - [Redis](https://github.com/redis/redis) for caching (used by Nextcloud to improve performance)
 - [MariaDB](https://github.com/MariaDB/server) as the database for Nextcloud
 
-All commands assume that you are inside your docker dir!
+## Clone this repository
 
-This command will create the missing directories and copy .env-example to .env.
+```sh
+git clone https://github.com/szidorpatrik/home-server.git && \
+cd home-server
+```
 
 ## Directories
 
-#### Symbolic links
+The commands will create the necessary dir structure and config files.
 
-Symbolic links are optional if your media and nextcloud data are stored on a mounted drive, but it's easier to navigate from the docker dir and won't need to change the [docker-compose.yml](./docker-compose.yml) volumes as its designed to use symbolic links.
+### Symlinks
 
-If you want to use symbolic links, run:
+Symlinks are optional if your media and nextcloud data are stored on a mounted drive, but it's easier to navigate from the docker dir and won't need to change the [docker-compose.yml](./docker-compose.yml) volumes as its designed to use symlinks.
 
-```sh
-mkdir -p caddy caddy/certs caddy/config caddy/data jellyfin jellyfin/cache jellyfin/config mariadb nextcloud nextcloud/apps nextcloud/config pihole pihole/etc-pihole redis && cp .env-example .env
-```
-
-If you don't want to use symbolic links, run:
+If you **want** to use symlinks, run:
 
 ```sh
-mkdir -p caddy caddy/certs caddy/config caddy/data jellyfin jellyfin/cache jellyfin/config jellyfin/media mariadb nextcloud nextcloud/apps nextcloud/config nextcloud/data pihole pihole/etc-pihole redis && cp .env-example .env
+mkdir -p caddy caddy/certs caddy/config caddy/data jellyfin jellyfin/cache jellyfin/config mariadb nextcloud nextcloud/apps nextcloud/config pihole pihole/etc-pihole redis && \
+cp .env-example .env && \
+cp caddy/Caddyfile-example caddy/Caddyfile && \
+cp nextcloud/mpm_prefork.conf-example nextcloud/mpm_prefork.conf && \
+cp nextcloud/php.ini-production-example nextcloud/php.ini-production && \
+cp mariadb/my.cnf-example mariadb/my.cnf
 ```
 
-### Jellyfin media (Symbolic link)
+If you **don't want** to use symlinks, run:
+
+```sh
+mkdir -p caddy caddy/certs caddy/config caddy/data jellyfin jellyfin/cache jellyfin/config jellyfin/media mariadb nextcloud nextcloud/apps nextcloud/config nextcloud/data pihole pihole/etc-pihole redis && \
+cp .env-example .env && \
+cp caddy/Caddyfile-example caddy/Caddyfile && \
+cp nextcloud/mpm_prefork.conf-example nextcloud/mpm_prefork.conf && \
+cp nextcloud/php.ini-production-example nextcloud/php.ini-production && \
+cp mariadb/my.cnf-example mariadb/my.cnf
+```
+
+### Jellyfin media (Symlink)
 
 ```sh
 ln -s /your/media/dir /your/docker/dir/jellyfin/media
 ```
 
-### Nextcloud data (Symbolic link)
+### Nextcloud data (Symlink)
 
 ```sh
 ln -s /your/data/dir /your/docker/dir/nextcloud/data
 ```
+
+If the symlinks appear broken, or 'Permission denied' when trying to execute ls or any other command, add read and execute permissions for the target folder!
+
+Check permissions at each level of the path to pinpoint the issue. \
+Start from the top and work your way down:
+
+```sh
+ls -ld /mnt
+ls -ld /mnt/external
+ls -ld /mnt/external/drive/nextcloud
+ls -ld /mnt/external/drive/nextcloud/user # <--- Here it throws 'Permission denied'
+ls -ld /mnt/external/drive/nextcloud/user/files
+```
+
+Add read and execute permissions:
+
+```sh
+sudo chmod -R 755 /mnt/external/drive/nextcloud/user
+```
+
+Repeat this process for any other symlinks!
 
 ## DNS (Pihole)
 
@@ -79,7 +115,7 @@ Now configure your local dns records under Settings -> Local DNS Records ([http:
 
 Test the dns records with `nslookup`.
 
-If they resolve then remove the `"80:80"` port from pihole container, because `Caddy` will use it and run:
+If they resolve then remove the `'80:80'` port from pihole container, because `Caddy` will use it and run:
 
 ```sh
 docker compose up -d pihole
@@ -139,7 +175,7 @@ If you want to use HTTPS, then:
 
 Nextcloud uses Redis for caching to improve performance. Ensure the `REDIS_HOST` variable in your **[.env](./.env)** file matches the Redis container name (`redis`).
 
-Then, add the following to your Nextcloud configuration file (**[config.php](./nextcloud/config/config.php)**) to enable Redis:
+Then, add/modify the following to your Nextcloud configuration file (**[config.php](./nextcloud/config/config.php)**) to enable Redis:
 
 ```php
 'memcache.local' => '\\OC\\Memcache\\Redis',
@@ -174,7 +210,7 @@ opcache.max_accelerated_files=10000
 opcache.max_wasted_percentage=10
 ```
 
-Save the file and restart the Nextcloud container:
+Save the file and restart the Nextcloud container if it runs already to apply the changes:
 
 ```sh
 docker compose restart nextcloud
@@ -218,7 +254,7 @@ tmp_table_size=64M
 max_connections=50
 ```
 
-After creating or modifying the file, restart the MariaDB container to apply the changes:
+After creating or modifying the file, restart the MariaDB container if it runs already to apply the changes:
 
 ```sh
 docker compose restart mariadb

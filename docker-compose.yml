@@ -4,8 +4,8 @@ services:
     image: pihole/pihole:latest
     restart: unless-stopped
     ports:
-      - "53:53/tcp"
-      - "53:53/udp"
+      - '53:53/tcp'
+      - '53:53/udp'
     environment:
       TZ: ${TZ}
       FTLCONF_webserver_api_password: ${FTLCONF_webserver_api_password}
@@ -22,9 +22,9 @@ services:
     image: caddy:latest
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
     volumes:
       - './caddy/Caddyfile:/etc/caddy/Caddyfile'
       - './caddy/certs:/etc/caddy/certs:ro'

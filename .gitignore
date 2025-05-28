@@ -1,24 +1,27 @@
-#---------------
+#------------------------
 .env
-#---------------
+# Pihole
 etc-pihole/
-#---------------
-caddy/config/*
-caddy/data/*
-caddy/certs/*
+# Caddy
+caddy/config/
+caddy/data/
+caddy/certs/
+caddy/Caddyfile
 *.crt
 *.key
-#---------------
-redis/*
-#---------------
+# Redis
+redis/
+# Nextcloud
 nextcloud/apps
 nextcloud/config
 nextcloud/data
-#---------------
-mariadb/*
-!mariadb/my.cnf
-#---------------
+nextcloud/mpm_prefork.conf
+nextcloud/php.ini-production
+# MariaDB
+mariadb/
+!mariadb/my.cnf-example
+# Jellyfin
 jellyfin/cache
 jellyfin/config
 jellyfin/media
-#---------------TODO Remove sym links from version control: git rm jellyfin/media nextcloud/data
+#------------------------
