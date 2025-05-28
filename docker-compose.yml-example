@@ -35,30 +35,37 @@ services:
     networks:
       - pihole_network
 
-  redis:
-    container_name: redis
-    restart: unless-stopped
-    image: redis:latest
-    volumes:
-      - './redis:/data'
-    mem_limit: 2400m
-    mem_reservation: 2200m
-    networks:
-      - pihole_network
+  # Uncomment if you want to use Redis and nextcloud/config/config.php is configured to use it
+  #redis:
+  #  container_name: redis
+  #  restart: unless-stopped
+  #  image: redis:latest
+  #  volumes:
+  #    - './redis:/data'
+  #  mem_limit: 2400m
+  #  mem_reservation: 2200m
+  #  networks:
+  #    - pihole_network
 
   nextcloud:
     container_name: nextcloud
     image: nextcloud:latest
     restart: unless-stopped
     environment:
+      - TZ=${TZ}
+      # Uncomment if you want to use Redis and nextcloud/config/config.php is configured to use it
+      #- REDIS_HOST=${REDIS_HOST}
       - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS}
       - OVERWRITEHOST=${OVERWRITEHOST}
       - OVERWRITEPROTOCOL=${OVERWRITEPROTOCOL}
-      - REDIS_HOST=${REDIS_HOST}
-      - TZ=${TZ}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_HOST=${MYSQL_HOST}
     volumes:
       - './nextcloud/config:/var/www/html/config'
-      - './nextcloud/apps:/var/www/html/apps'
+      # Uncomment if you want to mount the apps
+      #- './nextcloud/apps:/var/www/html/apps'
       - './nextcloud/data:/var/www/html/data'
       - './nextcloud/mpm_prefork.conf:/etc/apache2/mods-available/mpm_prefork.conf:ro'
       - './nextcloud/php.ini-production:/usr/local/etc/php/php.ini-production'
@@ -67,8 +74,9 @@ services:
         condition: service_started
       mariadb:
         condition: service_started
-      redis:
-        condition: service_started
+      # Uncomment if you want to use Redis and nextcloud/config/config.php is configured to use it
+      #redis:
+      #  condition: service_started
     networks:
       - pihole_network
 

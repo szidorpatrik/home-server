@@ -28,6 +28,7 @@ If you **want** to use symlinks, run:
 ```sh
 mkdir -p caddy caddy/certs caddy/config caddy/data jellyfin jellyfin/cache jellyfin/config mariadb nextcloud nextcloud/apps nextcloud/config pihole pihole/etc-pihole redis && \
 cp .env-example .env && \
+cp docker-compose.yml-example docker-compose.yml && \
 cp caddy/Caddyfile-example caddy/Caddyfile && \
 cp nextcloud/mpm_prefork.conf-example nextcloud/mpm_prefork.conf && \
 cp nextcloud/php.ini-production-example nextcloud/php.ini-production && \
@@ -39,44 +40,30 @@ If you **don't want** to use symlinks, run:
 ```sh
 mkdir -p caddy caddy/certs caddy/config caddy/data jellyfin jellyfin/cache jellyfin/config jellyfin/media mariadb nextcloud nextcloud/apps nextcloud/config nextcloud/data pihole pihole/etc-pihole redis && \
 cp .env-example .env && \
+cp docker-compose.yml-example docker-compose.yml && \
 cp caddy/Caddyfile-example caddy/Caddyfile && \
 cp nextcloud/mpm_prefork.conf-example nextcloud/mpm_prefork.conf && \
 cp nextcloud/php.ini-production-example nextcloud/php.ini-production && \
 cp mariadb/my.cnf-example mariadb/my.cnf
 ```
 
-### Jellyfin media (Symlink)
-
-```sh
-ln -s /your/media/dir /your/docker/dir/jellyfin/media
-```
-
 ### Nextcloud data (Symlink)
 
 ```sh
-ln -s /your/data/dir /your/docker/dir/nextcloud/data
+ln -s /your/data/dir /your/path/to/home-server/nextcloud/data
+
+#Example if the data dir is mounted as 'external-drive':
+ln -s /mnt/external-drive/nextcloud /home/user/home-server/nextcloud/data
 ```
 
-If the symlinks appear broken, or 'Permission denied' when trying to execute ls or any other command, add read and execute permissions for the target folder!
-
-Check permissions at each level of the path to pinpoint the issue. \
-Start from the top and work your way down:
+### Jellyfin media (Symlink)
 
 ```sh
-ls -ld /mnt
-ls -ld /mnt/external
-ls -ld /mnt/external/drive/nextcloud
-ls -ld /mnt/external/drive/nextcloud/user # <--- Here it throws 'Permission denied'
-ls -ld /mnt/external/drive/nextcloud/user/files
+ln -s /your/data/nextcloud/user/files/media-dir /your/path/to/home-server/jellyfin/media
+
+#Example if the media dir is 'Movies':
+ln -s /mnt/external-drive/nextcloud/user/files/Movies /home/user/home-server/jellyfin/media
 ```
-
-Add read and execute permissions:
-
-```sh
-sudo chmod -R 755 /mnt/external/drive/nextcloud/user
-```
-
-Repeat this process for any other symlinks!
 
 ## DNS (Pihole)
 
@@ -171,6 +158,27 @@ If you want to use HTTPS, then:
   }
   ```
 
+## MariaDB Configuration
+
+MariaDB settings are customized in the [my.cnf](./mariadb/my.cnf) file (mounted as `./mariadb:/var/lib/mysql` in the container). \
+This allows the settings to persist across container restarts.
+
+Create or modify the file at `./mariadb/my.cnf` with the following settings:
+
+```ini
+[mysqld]
+innodb_buffer_pool_size=256M
+query_cache_size=64M
+tmp_table_size=64M
+max_connections=50
+```
+
+After creating or modifying the file, restart the MariaDB container if it runs already to apply the changes:
+
+```sh
+docker compose restart mariadb
+```
+
 ## Nextcloud Redis Setup
 
 Nextcloud uses Redis for caching to improve performance. Ensure the `REDIS_HOST` variable in your **[.env](./.env)** file matches the Redis container name (`redis`).
@@ -186,7 +194,9 @@ Then, add/modify the following to your Nextcloud configuration file (**[config.p
 ],
 ```
 
-Save the file and restart the Nextcloud container:
+In the [docker-compose.yml](./docker-compose.yml) uncomment the redis container, the `environment` and `depends_on` sections which mentions redis.
+
+Restart nextcloud:
 
 ```sh
 docker compose restart nextcloud
@@ -239,26 +249,37 @@ MaxConnectionsPerChild  1000
 
 Adjust based on your system’s memory and traffic.
 
-## MariaDB Configuration
+## Nextcloud web configuration
 
-MariaDB settings are customized in the [my.cnf](./mariadb/my.cnf) file (mounted as `./mariadb:/var/lib/mysql` in the container). \
-This allows the settings to persist across container restarts.
+Create a user.
 
-Create or modify the file at `./mariadb/my.cnf` with the following settings:
+When installing nextcloud, select MariaDB and write the password for the connection located in the [`.env`](./.env) file `MYSQL_PASSWORD`.
 
-```ini
-[mysqld]
-innodb_buffer_pool_size=256M
-query_cache_size=64M
-tmp_table_size=64M
-max_connections=50
-```
+## Jellyfin setup
 
-After creating or modifying the file, restart the MariaDB container if it runs already to apply the changes:
+After a successful nextcloud setup create a folder with a name like `Movies`.
+
+If not created already, [create a symlink](#jellyfin-media-symlink) to `/path/to/nextcloud/user/files/Movies`.
 
 ```sh
-docker compose restart mariadb
+ln -s /path/to/nextcloud/user/files/Movies /path/to/home-server/jellyfin/media
 ```
+
+Check if the symlink is correct:
+
+```sh
+ls -al jellyfin/media
+```
+
+If permission is denied then use sudo, or refer [here](#fix-broken-symlinks).
+
+If you see your movies then the symlink is working as intended and we should configure Jellyfin with the web interface.
+
+Visit `http://jellyfin.your-domain.lan/` and create your admin user.
+
+When prompted for your media directory select `/media` usually its the last in the select box.
+
+Your movies should be visible.
 
 ## Resource Limits
 
@@ -338,3 +359,28 @@ docker exec -u www-data nextcloud php occ files:scan -all
 ```
 
 Wait for the process to finish, then reload nextclouds files page and the files should appear.
+
+## Fix broken symlinks
+
+> This is meant only for debugging purposes, the permissions for the `nextcloud` dir should be reset.
+
+If the symlinks appear broken, or 'Permission denied' when trying to execute ls or any other command, add read and execute permissions for the target folder!
+
+Check permissions at each level of the path to pinpoint the issue. \
+Start from the top and work your way down (example):
+
+```sh
+ls -ld /mnt
+ls -ld /mnt/external
+ls -ld /mnt/external/drive/nextcloud
+ls -ld /mnt/external/drive/nextcloud/user # <--- Here it throws 'Permission denied'
+ls -ld /mnt/external/drive/nextcloud/user/files
+```
+
+Add read and execute permissions:
+
+```sh
+sudo chmod -R 755 /mnt/external/drive/nextcloud/user
+```
+
+Repeat this process for any other symlinks!
