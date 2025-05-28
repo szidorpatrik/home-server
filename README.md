@@ -122,6 +122,12 @@ If you want to use only HTTP, then:
   }
   ```
 
+- Edit [`.env`](./.env) Nextcloud section `OVERWRITEPROTOCOL=https` to:
+
+  ```conf
+  OVERWRITEPROTOCOL=http
+  ```
+
 If you want to use HTTPS, then:
 
 - Create a `rootCA.crt` and `rootCA.key`, then sign a `wildcard.your-domain.lan.crt` and `wildcard.your-domain.lan.key` in the `caddy/certs/` dir.
