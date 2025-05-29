@@ -37,7 +37,7 @@ services:
       - pihole_network
 
   redis:
-    container_name: redis:alpine
+    container_name: redis
     restart: unless-stopped
     image: redis:alpine
     volumes:

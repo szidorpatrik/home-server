@@ -161,7 +161,7 @@ Start Caddy:
 docker compose up -d caddy
 ```
 
-## MariaDB Configuration
+## MariaDB Configuration (Optional)
 
 MariaDB settings are customized in the [my.cnf](./mariadb/my.cnf) file (mounted as `./mariadb:/var/lib/mysql` in the container). \
 This allows the settings to persist across container restarts.
@@ -182,17 +182,36 @@ Start MariaDB:
 docker compose up -d mariadb
 ```
 
-## Nextcloud Redis Setup
-
-This setup is already configured to use Redis.
-
-Ensure the `REDIS_HOST` variable in your **[.env](./.env)** file matches the Redis container name (`redis`).
+## Nextcloud web configuration
 
 Start Nextcloud and wait until it initializes:
 
 ```sh
 docker compose up -d nextcloud
 ```
+
+Create a user and wait for the installation process, no further actions needed.
+
+If it want's you to setup manually, then slect MariaDB as database and fill in the form with the corresponding variables in `Nextcloud` and `MariaDB` section in the [.env](./.env) file.
+
+```conf
+...
+#------Nextcloud------
+...
+MYSQL_HOST=mariadb
+#------MariaDB------
+MYSQL_ROOT_PASSWORD=root
+MYSQL_DATABASE=ncdb
+MYSQL_USER=nextcloud
+MYSQL_PASSWORD=nextcloud
+...
+```
+
+## Nextcloud Redis Setup (Optional)
+
+This setup is already configured to use Redis.
+
+Ensure the `REDIS_HOST` variable in your **[.env](./.env)** file matches the Redis container name (`redis`).
 
 By default this step is optional, but if the `./nextcloud/config/config.php` misses these lines then:
 
@@ -213,7 +232,7 @@ Restart nextcloud:
 docker compose restart nextcloud
 ```
 
-## Nextcloud PHP Configuration
+## Nextcloud PHP Configuration (Optional)
 
 Nextcloud’s PHP settings are customized in the **[php.ini-production](./nextcloud/php.ini-production)** file, which is mounted from `./nextcloud/php.ini-production`.
 
@@ -237,7 +256,7 @@ Save the file and restart the Nextcloud container if it runs already to apply th
 docker compose restart nextcloud
 ```
 
-## Nextcloud MPM Prefork Configuration
+## Nextcloud MPM Prefork Configuration (Optional)
 
 Nextcloud uses Apache with the MPM Prefork module, and its settings are customized in the **[mpm_prefork.conf](./nextcloud/mpm_prefork.conf)** file, which is mounted from `./nextcloud/mpm_prefork.conf`.
 
@@ -259,25 +278,6 @@ MaxConnectionsPerChild  1000
 ```
 
 Adjust based on your system’s memory and traffic.
-
-## Nextcloud web configuration
-
-Create a user and wait for the installation process, no further actions needed.
-
-If it want's you to setup manually, then slect MariaDB as database and fill in the form with the corresponding variables in `Nextcloud` and `MariaDB` section in the [.env](./.env) file.
-
-```conf
-...
-#------Nextcloud------
-...
-MYSQL_HOST=mariadb
-#------MariaDB------
-MYSQL_ROOT_PASSWORD=root
-MYSQL_DATABASE=ncdb
-MYSQL_USER=nextcloud
-MYSQL_PASSWORD=nextcloud
-...
-```
 
 ## Jellyfin setup
 
@@ -369,7 +369,7 @@ sudo chown -R www-data:www-data /mnt/external/drive/nextcloud/user
 Add permissions for everything for the owner and the group, read and execute for others:
 
 > Nextcloud will revert the permissions for the `/mnt/external/drive/nextcloud` dir after a while with `770` \
-> You can revert the permissions to original manually as well
+> You can revert the permissions to original manually as well and it is highly recommended! \
 > For debugging purposes this command is useful
 
 ```sh
