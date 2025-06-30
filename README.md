@@ -2,11 +2,12 @@
 
 This repository contains a home server setup with self-hosted:
 
-- [Pihole](https://github.com/pi-hole/pi-hole) dns and network wide ad-blocking
-- [Jellyfin](https://github.com/jellyfin/jellyfin) for Netflix/Plex like functionality
-- [Nextcloud server](https://github.com/nextcloud/server) for Google Drive like functionality, you can install different apps as well (Calendar, Chat, etc.)
-- [Redis](https://github.com/redis/redis) for caching (used by Nextcloud to improve performance)
+- [SearXNG](https://github.com/searxng/searxng) internet metasearch engine
+- [Pihole](https://github.com/pi-hole/pi-hole) dns, blocks ads and trackers across your entire network
+- [Jellyfin](https://github.com/jellyfin/jellyfin) media server
+- [Nextcloud server](https://github.com/nextcloud/server) file hosting service
 - [MariaDB](https://github.com/MariaDB/server) as the database for Nextcloud
+- [Redis](https://github.com/redis/redis) for caching (used by Nextcloud and SearXNG to improve performance)
 
 ## Clone this repository
 
@@ -21,15 +22,15 @@ The commands will create the necessary dir structure and config files.
 
 ### Symlinks
 
-Symlinks are optional if your media and nextcloud data are stored on a mounted drive, but it's easier to navigate from the docker dir and won't need to change the [docker-compose.yml](./docker-compose.yml) volumes as its designed to use symlinks.
+Symlinks are optional if your media and nextcloud data are stored on a mounted drive, but it's easier to navigate from the docker dir and won't need to change the [docker-compose.yml](./docker-compose.yml-example) volumes as its designed to use symlinks.
 
 If you **want** to use symlinks, run:
 
 ```sh
 mkdir -p caddy caddy/certs caddy/config caddy/data jellyfin jellyfin/cache jellyfin/config mariadb nextcloud nextcloud/apps nextcloud/config pihole pihole/etc-pihole redis && \
 cp .env-example .env && \
+cp searxng/settings.yml-example searxng/settings.yml && \
 cp docker-compose.yml-example docker-compose.yml && \
-cp caddy/Caddyfile-example caddy/Caddyfile && \
 cp nextcloud/mpm_prefork.conf-example nextcloud/mpm_prefork.conf && \
 cp nextcloud/php.ini-production-example nextcloud/php.ini-production && \
 cp mariadb/my.cnf-example mariadb/my.cnf
@@ -40,8 +41,8 @@ If you **don't want** to use symlinks, run:
 ```sh
 mkdir -p caddy caddy/certs caddy/config caddy/data jellyfin jellyfin/cache jellyfin/config jellyfin/media mariadb nextcloud nextcloud/apps nextcloud/config nextcloud/data pihole pihole/etc-pihole redis && \
 cp .env-example .env && \
+cp searxng/settings.yml-example searxng/settings.yml && \
 cp docker-compose.yml-example docker-compose.yml && \
-cp caddy/Caddyfile-example caddy/Caddyfile && \
 cp nextcloud/mpm_prefork.conf-example nextcloud/mpm_prefork.conf && \
 cp nextcloud/php.ini-production-example nextcloud/php.ini-production && \
 cp mariadb/my.cnf-example mariadb/my.cnf
@@ -64,12 +65,6 @@ Run the pihole container:
 docker compose up -d pihole
 ```
 
-To access the web interface go to: `http://your.server.ip.address/admin` \
-Your web interface password is located inside the **[.env](./.env)** in the `Pihole` section!
-
-Change it to something secure or it's even safer to remove the password from **[.env](./.env)** and change it from inside the container! \
-(Don't forget to [down](#down-remove-containers) and [up](#run-start-containers) the pihole service if only changed from the .env file!)
-
 To change the password inside the container, run:
 
 ```sh
@@ -78,81 +73,96 @@ docker exec -it pihole pihole setpassword
 
 Follow the prompts to set a new password.
 
+To access the web interface go to: `http://your.server.ip.address/admin` \
+Your web interface password is located inside the **[.env](./.env-example)** in the `Pihole` section!
+
+Change it to something secure or it's even safer to remove the password from **[.env](./.env-example)** and change it from inside the container! \
+(Don't forget to [down](#down-remove-containers) and [up](#run-start-containers) the pihole service if only changed from the .env file!)
+
 Now configure your local dns records under Settings -> Local DNS Records ([http://your.server.ip.address/admin/settings/dnsrecords](https://pihole.your-domain.lan/admin/settings/dnsrecords)) \
 **Don't forget to set your router's and/or client's primary dns to your server's ip address!**
 
 | **Domain**                 | **IP Address**         |
 |:---------------------------|:-----------------------|
+| search.your-domain.lan     | your.server.ip.address |
 | pihole.your-domain.lan     | your.server.ip.address |
 | jellyfin.your-domain.lan   | your.server.ip.address |
 | nextcloud.your-domain.lan  | your.server.ip.address |
 
 Test the dns records with:
 
+- `nslookup search.your-domain.lan`
 - `nslookup pihole.your-domain.lan`
 - `nslookup jellyfin.your-domain.lan`
 - `nslookup nextcloud.your-domain.lan`
 
-If they resolve then remove the `'80:80'` port from pihole container inside the [docker-compose.yml](./docker-compose.yml), because `Caddy` will use it and run:
+If they resolve then remove the `'80:80'` port from pihole container inside the [docker-compose.yml](./docker-compose.yml-example), because `Caddy` will use it and run:
 
 ```sh
 docker compose up -d pihole
 ```
 
+## Search engine (SearXNG)
+
+Update `secret_key` in [`./searxng/settings.yml`](./searxng/settings.yml-example)
+
+For other configurations see [searxng/searxng-docker](https://github.com/searxng/searxng-docker)
+
 ## Reverse proxy (Caddy)
 
-If you want to use only HTTP, then:
-
-- Edit your **[Caddyfile](./caddy/Caddyfile)**
-
-- Add `http://` to all sites (without `http`, it will automatically redirect to HTTPS)\
-  Example:
-
-  ```conf
-  http://pihole.your-domain.lan {
-    redir / /admin 301
-    reverse_proxy /* pihole:80
-  }
-  
-  http://nextcloud.your-domain.lan {
-    reverse_proxy /* nextcloud:80
-  }
-  
-  http://jellyfin.your-domain.lan {
-    reverse_proxy /* jellyfin:8096
-  }
-  ```
-
-- Edit [`.env`](./.env) Nextcloud section `OVERWRITEPROTOCOL=https` and update `your-domain` to:
+Update the domains in [`.env`](./.env-example) Nextcloud section
 
   ```conf
   NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.your-domain.lan
   OVERWRITEHOST=nextcloud.your-domain.lan
+  ```
+
+#### If you want to use only HTTP, then
+
+- Copy [`Caddyfile-example-http`](./caddy/Caddyfile-example-http) as `Caddyfile`
+
+  ```sh
+  cp ./caddy/Caddyfile-example-http ./caddy/Caddyfile
+  ```
+
+- Edit [`.env`](./.env) Nextcloud section `OVERWRITEPROTOCOL=https` to:
+
+  ```conf
   OVERWRITEPROTOCOL=http
   ```
 
-If you want to use HTTPS, then:
+#### If you want to use HTTPS, then
+
+- Copy [`Caddyfile-example`](./caddy/Caddyfile-example) as `Caddyfile`
+
+  ```sh
+  cp ./caddy/Caddyfile-example ./caddy/Caddyfile
+  ```
 
 - Create a `rootCA.crt` and `rootCA.key`, then sign a `wildcard.your-domain.lan.crt` and `wildcard.your-domain.lan.key` in the `caddy/certs/` dir.
 
-- Update the `Nextcloud` section in **[.env](./.env)** and update **[Caddyfile](./caddy/Caddyfile)** proxies with your domain names and wildcard cert. For example:
+- Update the `Nextcloud` section in **[.env](./.env-example)** and update **[Caddyfile](./caddy/Caddyfile-example)** proxies with your domain names and wildcard cert. For example:
 
   ```conf
+  # Before
+  #...
   pihole.your-domain.lan {
     tls /etc/caddy/certs/wildcard.your-domain.lan.crt /etc/caddy/certs/wildcard.your-domain.lan.key
     redir / /admin 301
     reverse_proxy /* pihole:80
   }
-  
-  nextcloud.your-domain.lan {
-    tls /etc/caddy/certs/wildcard.your-domain.lan.crt /etc/caddy/certs/wildcard.your-domain.lan.key
-    reverse_proxy /* nextcloud:80
+  #...
+  ```
+
+  ```conf
+  # After
+  #...
+  pihole.your-updated-domain.lan {
+    tls /etc/caddy/certs/wildcard.your-updated-domain.lan.crt /etc/caddy/certs/wildcard.your-updated-domain.lan.key
+    redir / /admin 301
+    reverse_proxy /* pihole:80
   }
-  
-  jellyfin.your-domain.lan {
-    tls /etc/caddy/certs/wildcard.your-domain.lan.crt /etc/caddy/certs/wildcard.your-domain.lan.key
-    reverse_proxy /* jellyfin:8096
-  }
+  #...
   ```
 
 Start Caddy:
@@ -161,9 +171,9 @@ Start Caddy:
 docker compose up -d caddy
 ```
 
-## MariaDB Configuration (Optional)
+## MariaDB Configuration (Optional, configured by default)
 
-MariaDB settings are customized in the [my.cnf](./mariadb/my.cnf) file (mounted as `./mariadb:/var/lib/mysql` in the container). \
+MariaDB settings are customized in the [my.cnf](./mariadb/my.cnf-example) file (mounted as `./mariadb:/var/lib/mysql` in the container). \
 This allows the settings to persist across container restarts.
 
 Create or modify the file at `./mariadb/my.cnf` with the following settings:
@@ -192,7 +202,7 @@ docker compose up -d nextcloud
 
 Create a user and wait for the installation process, no further actions needed.
 
-If it want's you to setup manually, then slect MariaDB as database and fill in the form with the corresponding variables in `Nextcloud` and `MariaDB` section in the [.env](./.env) file.
+If it want's you to setup manually, then slect MariaDB as database and fill in the form with the corresponding variables in `Nextcloud` and `MariaDB` section in the [.env](./.env-example) file.
 
 ```conf
 ...
@@ -207,11 +217,11 @@ MYSQL_PASSWORD=nextcloud
 ...
 ```
 
-## Nextcloud Redis Setup (Optional)
+## Nextcloud Redis Setup (Optional, recommended)
 
 This setup is already configured to use Redis.
 
-Ensure the `REDIS_HOST` variable in your **[.env](./.env)** file matches the Redis container name (`redis`).
+Ensure the `REDIS_HOST` variable in your **[.env](./.env-example)** file matches the Redis container name (`redis`).
 
 By default this step is optional, but if the `./nextcloud/config/config.php` misses these lines then:
 
@@ -232,9 +242,9 @@ Restart nextcloud:
 docker compose restart nextcloud
 ```
 
-## Nextcloud PHP Configuration (Optional)
+## Nextcloud PHP Configuration (Optional, configured by default)
 
-Nextcloud’s PHP settings are customized in the **[php.ini-production](./nextcloud/php.ini-production)** file, which is mounted from `./nextcloud/php.ini-production`.
+Nextcloud’s PHP settings are customized in the **[php.ini-production](./nextcloud/php.ini-production-example)** file, which is mounted from `./nextcloud/php.ini-production`.
 
 If this file doesn’t exist, create it and add or modify the following settings to optimize performance:
 
@@ -256,9 +266,9 @@ Save the file and restart the Nextcloud container if it runs already to apply th
 docker compose restart nextcloud
 ```
 
-## Nextcloud MPM Prefork Configuration (Optional)
+## Nextcloud MPM Prefork Configuration (Optional, configured by default)
 
-Nextcloud uses Apache with the MPM Prefork module, and its settings are customized in the **[mpm_prefork.conf](./nextcloud/mpm_prefork.conf)** file, which is mounted from `./nextcloud/mpm_prefork.conf`.
+Nextcloud uses Apache with the MPM Prefork module, and its settings are customized in the **[mpm_prefork.conf](./nextcloud/mpm_prefork.conf-example)** file, which is mounted from `./nextcloud/mpm_prefork.conf`.
 
 If this file doesn’t exist, create it with the following settings to optimize Apache for low-memory systems while handling moderate traffic:
 
@@ -312,7 +322,7 @@ The [docker-compose.yml](./docker-compose.yml) sets memory limits for some servi
 - **Redis**: Limited to 2400MB with a 2200MB reservation.
 - **Jellyfin**: Limited to 2048MB with a 1024MB reservation.
 
-Adjust these values in the [docker-compose.yml](./docker-compose.yml) based on your system’s available memory. After making changes, restart the services:
+Adjust these values in the [docker-compose.yml](./docker-compose.yml-example) based on your system’s available memory. After making changes, restart the services:
 
 ```sh
 docker compose up -d

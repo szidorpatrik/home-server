@@ -30,8 +30,7 @@
 }
 
 # SearXNG
-search.your-domain.lan {
-    tls /etc/caddy/certs/wildcard.your-domain.lan.crt /etc/caddy/certs/wildcard.your-domain.lan.key
+http://search.your-domain.lan {
     
     @api {
     	path /config
@@ -94,18 +93,15 @@ search.your-domain.lan {
     }
 }
 
-pihole.your-domain.lan {
-    tls /etc/caddy/certs/wildcard.your-domain.lan.crt /etc/caddy/certs/wildcard.your-domain.lan.key
+http://pihole.your-domain.lan {
     redir / /admin 301
     reverse_proxy /* pihole:80
 }
 
-nextcloud.your-domain.lan {
-    tls /etc/caddy/certs/wildcard.your-domain.lan.crt /etc/caddy/certs/wildcard.your-domain.lan.key
+http://nextcloud.your-domain.lan {
     reverse_proxy /* nextcloud:80
 }
 
-jellyfin.your-domain.lan {
-    tls /etc/caddy/certs/wildcard.your-domain.lan.crt /etc/caddy/certs/wildcard.your-domain.lan.key
+http://jellyfin.your-domain.lan {
     reverse_proxy /* jellyfin:8096
 }
