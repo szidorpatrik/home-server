@@ -368,8 +368,7 @@ sudo chown -R www-data:www-data /mnt/external/drive/nextcloud/user
 
 Add permissions for everything for the owner and the group, read and execute for others:
 
-> Nextcloud will revert the permissions for the `/mnt/external/drive/nextcloud` dir after a while with `770` \
-> You can revert the permissions to original manually as well and it is highly recommended! \
+> You should revert the permissions to original manually! \
 > For debugging purposes this command is useful
 
 ```sh
