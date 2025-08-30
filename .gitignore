@@ -5,7 +5,8 @@ docker-compose.yml
 searxng/uwsgi.ini
 searxng/searxng-data/*
 #Ignored settings.yml because of secret
-searxng/settings.yml 
+searxng/settings.yml
+searxng/settings.yml.new
 # Pihole
 etc-pihole/
 # Caddy
