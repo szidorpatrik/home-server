@@ -1,4 +1,5 @@
 #------------------------
+.vscode
 .env
 docker-compose.yml
 # SearXNG
@@ -19,7 +20,7 @@ caddy/Caddyfile
 # Redis
 redis/
 # Nextcloud
-nextcloud/apps
+nextcloud/app
 nextcloud/config
 nextcloud/data
 nextcloud/mpm_prefork.conf
