@@ -34,7 +34,7 @@
 # --- Services ---
 
 # SearXNG
-http://search.example.com {
+http://search.example.lan {
     import compression
     import standard_headers
 
@@ -62,7 +62,7 @@ http://search.example.com {
 }
 
 # Pi-hole
-http://pihole.example.com {
+http://pihole.example.lan {
     import standard_headers
     import compression
 
@@ -71,7 +71,7 @@ http://pihole.example.com {
 }
 
 # Nextcloud
-http://nextcloud.example.com {
+http://nextcloud.example.lan {
     import standard_headers
     import compression
 
@@ -88,7 +88,7 @@ http://nextcloud.example.com {
 }
 
 # Jellyfin
-http://jellyfin.example.com {
+http://jellyfin.example.lan {
     import standard_headers
     
     reverse_proxy jellyfin:8096 {

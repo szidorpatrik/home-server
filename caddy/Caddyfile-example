@@ -56,7 +56,7 @@
         output discard
     }
 
-    @my_domains host *.example.com  # <--- Change to your domain
+    @my_domains host *.example.lan  # <--- Change to your domain
 
     handle @my_domains {
         redir https://{host}{uri}
@@ -78,7 +78,7 @@
 # --- Services ---
 
 # SearXNG - Privacy-respecting metasearch
-search.example.com {
+search.example.lan {
     import local_tls
     import compression
 
@@ -116,7 +116,7 @@ search.example.com {
 }
 
 # Pi-hole
-pihole.example.com {
+pihole.example.lan {
     import local_tls
     import standard_headers
     import compression
@@ -126,7 +126,7 @@ pihole.example.com {
 }
 
 # Nextcloud
-nextcloud.example.com {
+nextcloud.example.lan {
     import local_tls
     import standard_headers
     import compression
@@ -148,7 +148,7 @@ nextcloud.example.com {
 }
 
 # Jellyfin
-jellyfin.example.com {
+jellyfin.example.lan {
     import local_tls
     import standard_headers
     
