@@ -1,0 +1,123 @@
+services:
+  nextcloud-aio-mastercontainer:
+    image: nextcloud/all-in-one:latest
+    container_name: nextcloud-aio-mastercontainer
+    init: true
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - NEXTCLOUD_DATADIR=${NEXTCLOUD_DATADIR}
+      - APACHE_PORT=11000
+      - APACHE_IP_BINDING=0.0.0.0
+      - SKIP_DOMAIN_VALIDATION=true
+    volumes:
+      - nextcloud_aio_mastercontainer:/mnt/docker-aio-config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - pihole_network
+
+  caddy:
+    container_name: caddy
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - './caddy/Caddyfile:/etc/caddy/Caddyfile'
+      - './caddy/certs:/etc/caddy/certs:ro'
+      - './caddy/data:/data'
+      - './caddy/config:/config'
+    depends_on:
+      - pihole
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - pihole_network
+
+  unbound:
+    container_name: unbound
+    image: mvance/unbound:latest
+    restart: unless-stopped
+    hostname: unbound
+    volumes:
+      - ./unbound:/opt/unbound/etc/unbound:rw
+    networks:
+      - pihole_network
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    restart: unless-stopped
+    ports:
+      - '53:53/tcp'
+      - '53:53/udp'
+    environment:
+      TZ: ${TZ}
+      FTLCONF_webserver_api_password: ${FTLCONF_webserver_api_password}
+      FTLCONF_dns_listeningMode: ${FTLCONF_dns_listeningMode}
+      PIHOLE_DNS_: unbound#53
+    volumes:
+      - './pihole/etc-pihole:/etc/pihole'
+      - './pihole/etc-pihole/dnsmasq.conf:/etc/dnsmasq.d'
+    cap_add:
+      - SYS_NICE
+    depends_on:
+      - unbound
+    networks:
+      - pihole_network
+
+  jellyfin:
+    container_name: jellyfin
+    image: jellyfin/jellyfin:latest
+    restart: unless-stopped
+    environment:
+      - PUID=${WWW_DATA_UID}
+      - PGID=${WWW_DATA_GID}
+      - TZ=${TZ}
+    ports:
+      - '8096:8096'
+    volumes:
+      - './jellyfin/config:/config'
+      - './jellyfin/cache:/cache'
+      - '${JELLYFIN_MEDIA_DIR}:/media'
+    devices:
+      - /dev/dri:/dev/dri
+    depends_on:
+      - caddy
+    mem_limit: 4096m
+    mem_reservation: 512m
+    networks:
+      - pihole_network
+
+  searxng:
+    container_name: searxng
+    image: docker.io/searxng/searxng:latest
+    restart: unless-stopped
+    environment:
+      - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME}/
+      - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS}
+      - UWSGI_THREADS=${SEARXNG_UWSGI_THREADS}
+    volumes:
+      - ./searxng:/etc/searxng:rw
+      - ./searxng/searxng-data:/var/cache/searxng:rw
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
+    depends_on:
+      caddy:
+        condition: service_started
+    networks:
+      - pihole_network
+
+volumes:
+  nextcloud_aio_mastercontainer:
+    name: nextcloud_aio_mastercontainer
+
+networks:
+  pihole_network:
+    driver: bridge

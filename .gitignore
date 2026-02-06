@@ -3,33 +3,23 @@
 .env
 docker-compose.yml
 # SearXNG
+searxng/searxng-data/
 searxng/uwsgi.ini
 searxng/searxng-data/*
 #Ignored settings.yml because of secret
 searxng/settings.yml
 searxng/settings.yml.new
 # Pihole
-etc-pihole/
+pihole/
+# Unbound
+unbound/
+!unbound/unbound.conf
 # Caddy
-caddy/config/
-caddy/data/
-caddy/certs/
-caddy/Caddyfile
-*.crt
-*.key
-# Redis
-redis/
-# Nextcloud
-nextcloud/app
-nextcloud/config
-nextcloud/data
-nextcloud/mpm_prefork.conf
-nextcloud/php.ini-production
-# MariaDB
-mariadb/
-!mariadb/my.cnf-example
+caddy/
+!caddy/Caddyfile-example
+!caddy/Caddyfile-example-http
 # Jellyfin
-jellyfin/cache
-jellyfin/config
-jellyfin/media
+jellyfin/
+# Others
+other-services/
 #------------------------
