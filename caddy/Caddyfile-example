@@ -1,111 +1,159 @@
 {
-	admin off
+    # Disables the admin API for increased security in static environments
+    admin off
 
-	log {
-		output stderr
-		format filter {
-			# Preserves first 8 bits from IPv4 and 32 bits from IPv6
-			request>remote_ip ip_mask 8 32
-			request>client_ip ip_mask 8 32
+    # Global logging with privacy filters: Masks IPs and strips sensitive query params
+    log {
+        output stderr
+        format filter {
+            request>remote_ip ip_mask 8 32
+            request>client_ip ip_mask 8 32
+            request>remote_port delete
+            request>headers delete
+            request>uri query {
+                delete url
+                delete h
+                delete q
+            }
+        }
+    }
 
-			# Remove identificable information
-			request>remote_port delete
-			request>headers delete
-			request>uri query {
-				delete url
-				delete h
-				delete q
-			}
-		}
-	}
-
-	servers {
-		client_ip_headers X-Forwarded-For X-Real-IP
-
-		# Allow the following IP to passthrough the "X-Forwarded-*" headers to SearXNG
-		# https://caddyserver.com/docs/caddyfile/options#trusted-proxies
-		trusted_proxies static private_ranges
-		trusted_proxies_strict
-	}
+    servers {
+        # Trust proxy headers (e.g., from Cloudflare or a local Load Balancer)
+        client_ip_headers X-Forwarded-For X-Real-IP
+        trusted_proxies static private_ranges
+        trusted_proxies_strict
+    }
 }
 
-# SearXNG
-search.your-domain.lan {
-    tls /etc/caddy/certs/wildcard.your-domain.lan.crt /etc/caddy/certs/wildcard.your-domain.lan.key
-    
-    @api {
-    	path /config
-    	path /healthz
-    	path /stats/errors
-    	path /stats/checker
+# --- Snippets ---
+
+# Replace paths with your actual certificate locations
+(local_tls) {
+    tls /etc/caddy/certs/cert.crt /etc/caddy/certs/cert.key
+}
+
+# Standard security headers for all services
+(standard_headers) {
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "no-referrer"
+        -Server
+    }
+}
+
+(compression) {
+    encode zstd gzip
+}
+
+# --- Global Catch-All & Scanner Traps ---
+
+# Redirect known local hostnames to HTTPS, abort everything else (scanner trap)
+:80 {
+    log {
+        output discard
     }
 
-    @search {
-    	path /search
+    @my_domains host *.example.com  # <--- Change to your domain
+
+    handle @my_domains {
+        redir https://{host}{uri}
     }
 
-    @imageproxy {
-    	path /image_proxy
+    handle {
+        abort
     }
+}
 
-    @static {
-    	path /static/*
+# Silently drop connection for direct IP access on 443
+:443 {
+    log {
+        output discard
     }
+    abort
+}
+
+# --- Services ---
+
+# SearXNG - Privacy-respecting metasearch
+search.example.com {
+    import local_tls
+    import compression
 
     header {
-    	# CSP (https://content-security-policy.com)
-    	Content-Security-Policy "upgrade-insecure-requests; default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self' https:; font-src 'self'; frame-ancestors 'self'; base-uri 'self'; connect-src 'self'; img-src * data:; frame-src https:;"
-
-    	# Disable some browser features
-    	Permissions-Policy "accelerometer=(),camera=(),geolocation=(),gyroscope=(),magnetometer=(),microphone=(),payment=(),usb=()"
-
-    	# Set referrer policy
-    	Referrer-Policy "no-referrer"
-
-    	# Force clients to use HTTPS
-    	Strict-Transport-Security "max-age=31536000"
-
-    	# Prevent MIME type sniffing from the declared Content-Type
-    	X-Content-Type-Options "nosniff"
-
-    	# X-Robots-Tag (comment to allow site indexing)
-    	X-Robots-Tag "noindex, noarchive, nofollow"
-
-    	# Remove "Server" header
-    	-Server
+        Content-Security-Policy "upgrade-insecure-requests; default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self' https:; font-src 'self'; frame-ancestors 'self'; base-uri 'self'; connect-src 'self'; img-src * data:; frame-src https:;"
+        Permissions-Policy "accelerometer=(),camera=(),geolocation=(),gyroscope=(),magnetometer=(),microphone=(),payment=(),usb=()"
+        Referrer-Policy "no-referrer"
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options "nosniff"
+        X-Robots-Tag "noindex, noarchive, nofollow"
+        -Server
     }
 
+    # API and internal health routes
+    @api path /config /healthz /stats/errors /stats/checker
+    @search path /search
+    @imageproxy path /image_proxy
+    @static path /static/*
+
     header @api {
-    	Access-Control-Allow-Methods "GET, OPTIONS"
-    	Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, OPTIONS"
+        Access-Control-Allow-Origin "*"
     }
 
     route {
-    	# Cache policy
-    	header Cache-Control "max-age=0, no-store"
-    	header @search Cache-Control "max-age=5, private"
-    	header @imageproxy Cache-Control "max-age=604800, public"
-    	header @static Cache-Control "max-age=31536000, public, immutable"
-    }
-
-    reverse_proxy /* searxng:8080 {
-        # https://github.com/searx/searx-docker/issues/24
-        header_up Connection "close"
+        header Cache-Control "max-age=0, no-store"
+        header @search Cache-Control "max-age=5, private"
+        header @imageproxy Cache-Control "max-age=604800, public"
+        header @static Cache-Control "max-age=31536000, public, immutable"
+        
+        reverse_proxy searxng:8080 {
+            header_up Connection "close"
+        }
     }
 }
 
-pihole.your-domain.lan {
-    tls /etc/caddy/certs/wildcard.your-domain.lan.crt /etc/caddy/certs/wildcard.your-domain.lan.key
+# Pi-hole
+pihole.example.com {
+    import local_tls
+    import standard_headers
+    import compression
+
     redir / /admin 301
-    reverse_proxy /* pihole:80
+    reverse_proxy pihole:80
 }
 
-nextcloud.your-domain.lan {
-    tls /etc/caddy/certs/wildcard.your-domain.lan.crt /etc/caddy/certs/wildcard.your-domain.lan.key
-    reverse_proxy /* nextcloud:80
+# Nextcloud
+nextcloud.example.com {
+    import local_tls
+    import standard_headers
+    import compression
+
+    # Required for CardDAV/CalDAV sync if not handled by app server
+    # redir /.well-known/carddav /remote.php/dav 301
+    # redir /.well-known/caldav /remote.php/dav 301
+
+    reverse_proxy host.docker.internal:11000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme} # Tells Nextcloud the user is using HTTPS
+        
+        transport http {
+            response_header_timeout 3600s
+        }
+    }
 }
 
-jellyfin.your-domain.lan {
-    tls /etc/caddy/certs/wildcard.your-domain.lan.crt /etc/caddy/certs/wildcard.your-domain.lan.key
-    reverse_proxy /* jellyfin:8096
+# Jellyfin
+jellyfin.example.com {
+    import local_tls
+    import standard_headers
+    
+    reverse_proxy jellyfin:8096 {
+        # Prevents buffering issues for some clients
+        flush_interval -1
+    }
 }
