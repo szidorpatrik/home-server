@@ -34,7 +34,7 @@ mkdir -p caddy/{certs,config,data} \
          jellyfin/{cache,config} \
          pihole/etc-pihole \
          searxng/searxng-data \
-         unbound{dev,var}
+         unbound/{dev,var}
 ```
 
 ### 3. Environment Variables
