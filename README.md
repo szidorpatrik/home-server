@@ -37,7 +37,27 @@ mkdir -p caddy/{certs,config,data} \
          unbound/{dev,var}
 ```
 
-### 3. Environment Variables
+### 3. Pull the containers
+
+```sh
+docker compose pull
+```
+
+### 4. Run pihole
+
+Without internet access, it can't download it's gravity file.
+
+```sh
+docker compose up -d pihole
+```
+
+If you can access pihole dashboard at `http:<server-ip>:8888`, with password in the `.env` file remove the container:
+
+```sh
+docker compose down pihole
+```
+
+### 5. Environment Variables
 
 Create the `.env` file from the example.
 
@@ -53,7 +73,7 @@ Open `.env` and configure the following:
 - `NEXTCLOUD_DATADIR`: Path on your host where Nextcloud files will be stored.
 - `JELLYFIN_MEDIA_DIR`: Path to your media library (e.g. path/to/nextcloud/user/files/jellyfin).
 
-### 4. Caddy Configuration (Choose One)
+### 6. Caddy Configuration (Choose One)
 
 Choose the mode that fits your network setup.
 
@@ -82,7 +102,7 @@ cp caddy/Caddyfile-example-http caddy/Caddyfile
 
 - Replace `http://search.example.lan` with your local IP or internal domains, which can be set in pihole's local dns records.
 
-### 5. Service Configuration
+### 7. Service Configuration
 
 #### SearXNG
 
@@ -108,9 +128,7 @@ The configuration file is located at `unbound/unbound.conf`.
 curl -o unbound/root.hints https://www.internic.net/domain/named.root
 ```
 
-- Uncomment the `root-hints:` line in `unbound/unbound.conf` to enable it.
-
-### 5. Start the Stack
+### 8. Start the Stack
 
 ```bash
 docker compose up -d
@@ -118,15 +136,60 @@ docker compose up -d
 
 ## Post-Install
 
+### Pi-hole
+
+- Log into Pi-hole (`http://<server-ip>:8888/admin`) using the password set in `.env`.
+- Set up your DNS records at `Settings > Local DNS Records`.
+- Configure your router to have DHCP clients use Pi-hole as their DNS server.
+- Pi-hole should be pre-configured to use Unbound as its upstream DNS.
+  - Check DNS (Expert toggle) > Custom DNS servers, set it to `unbound#53`.
+  - Set Conditional forwarding: `true,<subnet/mask>,<router ip>` (e.g. `true,192.168.1.0/24,192.168.1.1`)
+- Remove/Comment out `'8888:8888'` line from pihole in [compose.yml](./compose.yml) then run:
+
+    ```sh
+    docker compose up -d
+    ```
+
+- Make a copy of your current /etc/resolv.conf:
+
+    ```sh
+    sudo cp /etc/resolv.conf /etc/resolv.conf.old
+    ```
+
+- Edit /etc/resolv.conf so that it contains the ip of your server and nothing more:
+
+    ```sh
+    nameserver 192.168.1.128 # <- This server's IP
+    ```
+
+- You should be able to access pihole at `https://pihole.example.lan/`.
+
 ### Nextcloud AIO
 
 - Access the setup interface at `https://<your-ip>:8080`.
 - Because `SKIP_DOMAIN_VALIDATION=true` is set, you can configure it using your internal domain.
 - **Important:** Ensure you enter the correct domain in the AIO interface that matches your Caddyfile.
 
-### Pi-hole & Unbound
+### Jellyfin
 
-- Configure your router to have DHCP clients use Pi-hole as their DNS server.
-- Pi-hole is pre-configured to use Unbound as its upstream DNS (`unbound#53`).
-- Log into Pi-hole (`http://pihole.yourdomain.lan/admin`) using the password set in `.env`.
-- Set up your DNS records at `Settings > Local DNS Records`.
+- If you can't install your self signed cert on your smart tv, uncomment (remove `#`)
+
+    Before:
+
+    ```yml
+    #ports:
+    #  - '8096:8096'
+    ```
+
+    After:
+
+    ```yml
+    ports:
+      - '8096:8096'
+    ```
+
+    Run, then access it at `http://jellyfin.example.lan:8096` or `http:<server-ip>:8096`
+
+    ```sh
+    docker compose up -d
+    ```
