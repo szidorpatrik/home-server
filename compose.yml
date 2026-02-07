@@ -5,7 +5,7 @@ services:
     init: true
     restart: always
     ports:
-      - "8080:8080"
+      - '8080:8080'
     environment:
       - NEXTCLOUD_DATADIR=${NEXTCLOUD_DATADIR}
       - APACHE_PORT=11000
@@ -52,6 +52,7 @@ services:
     image: pihole/pihole:latest
     restart: unless-stopped
     ports:
+      - '8888:80/tcp'
       - '53:53/tcp'
       - '53:53/udp'
     environment:
@@ -61,7 +62,6 @@ services:
       PIHOLE_DNS_: unbound#53
     volumes:
       - './pihole/etc-pihole:/etc/pihole'
-      - './pihole/etc-pihole/dnsmasq.conf:/etc/dnsmasq.d'
     cap_add:
       - SYS_NICE
     depends_on:
@@ -77,8 +77,8 @@ services:
       - PUID=${WWW_DATA_UID}
       - PGID=${WWW_DATA_GID}
       - TZ=${TZ}
-    ports:
-      - '8096:8096'
+    #ports:
+    #  - '8096:8096'
     volumes:
       - './jellyfin/config:/config'
       - './jellyfin/cache:/cache'
