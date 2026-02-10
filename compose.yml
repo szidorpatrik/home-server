@@ -64,6 +64,9 @@ services:
       FTLCONF_dns_revServers: ${FTLCONF_dns_revServers}
       FTLCONF_dns_domain: ${FTLCONF_dns_domain}
       FTLCONF_dns_hosts: ${FTLCONF_dns_hosts}
+      FTLCONF_dns_cache_size: ${FTLCONF_dns_cache_size}
+      FTLCONF_dns_rateLimit_count: ${FTLCONF_dns_rateLimit_count}
+      FTLCONF_dns_rateLimit_interval: ${FTLCONF_dns_rateLimit_interval}
     volumes:
       - './pihole:/etc/pihole'
     cap_add:

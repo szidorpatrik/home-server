@@ -61,7 +61,7 @@ cp .env-example .env
 Open `.env` and configure the following:
 
 | Variable | Description |
-| --- | --- |
+| :--- | :--- |
 | **`FTLCONF_dns_hosts`** | **Crucial:** Change `192.168.1.x` to your server's actual static IP (**No spaces between `;`**). |
 | **`FTLCONF_dns_revServers`** | Update `192.168.1.1` to your router's IP and check if your subnet is `/24`. |
 | **`FTLCONF_webserver_api_password`** | Your admin password for the Pi-hole dashboard. |
@@ -112,6 +112,36 @@ cp searxng/settings.yml-example searxng/settings.yml
 **Modify `searxng/settings.yml`:**
 
 - Ensure the `secret_key` is unique.
+
+#### Unbound
+
+1. Update `example.lan` to your actual domain in [unbound.conf](./unbound/unbound.conf).
+2. Optimize for your CPU. The `num-threads` and `*-slabs` must be a **power of 2** (e.g., 1, 2, 4, 8).
+
+| Component | 4-8 Cores (Recommended) | 1-2 Cores |
+| :--- | :--- | :--- |
+| `num-threads` | 4 | 1 or 2 |
+| `*-slabs` | 4 | 1 or 2 |
+| `so-rcvbuf` | 4m | 1m |
+
+```conf
+# Performance Tuning
+num-threads: 4
+msg-cache-slabs: 4
+rrset-cache-slabs: 4
+infra-cache-slabs: 4
+key-cache-slabs: 4
+
+# Buffer & Cache
+so-rcvbuf: 4m
+so-sndbuf: 4m
+rrset-cache-size: 256m
+msg-cache-size: 128m
+
+# Security
+domain-insecure: "szipat.lan"
+domain-insecure: "lan"
+```
 
 ### 7. Update resolved.conf
 
