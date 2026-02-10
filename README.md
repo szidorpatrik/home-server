@@ -30,10 +30,10 @@ Initialize the necessary folders for persistent data to ensure permissions are h
 
 ```bash
 mkdir -p caddy/{certs,config,data} \
-         jellyfin/{cache,config} \
-         pihole/etc-pihole \
+         pihole \
+         unbound/{dev,var}\
          searxng/searxng-data \
-         unbound/{dev,var}
+         jellyfin/{cache,config}
 ```
 
 Update unbound dir permissions (for root.key):

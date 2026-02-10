@@ -131,16 +131,10 @@ nextcloud.example.lan {
     import standard_headers
     import compression
 
-    # Required for CardDAV/CalDAV sync if not handled by app server
-    # redir /.well-known/carddav /remote.php/dav 301
-    # redir /.well-known/caldav /remote.php/dav 301
+    redir /.well-known/carddav /remote.php/dav 301
+    redir /.well-known/caldav /remote.php/dav 301
 
-    reverse_proxy host.docker.internal:11000 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme} # Tells Nextcloud the user is using HTTPS
-        
+    reverse_proxy nextcloud-aio-apache:11000 {
         transport http {
             response_header_timeout 3600s
         }
