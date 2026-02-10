@@ -59,9 +59,12 @@ services:
       TZ: ${TZ}
       FTLCONF_webserver_api_password: ${FTLCONF_webserver_api_password}
       FTLCONF_dns_listeningMode: ${FTLCONF_dns_listeningMode}
-      PIHOLE_DNS_: unbound#53
+      FTLCONF_dns_upstreams: ${FTLCONF_dns_upstreams}
+      FTLCONF_dns_revServers: ${FTLCONF_dns_revServers}
+      FTLCONF_dns_domain: ${FTLCONF_dns_domain}
+      FTLCONF_dns_hosts: ${FTLCONF_dns_hosts}
     volumes:
-      - './pihole/etc-pihole:/etc/pihole'
+      - './pihole:/etc/pihole'
     cap_add:
       - SYS_NICE
     depends_on:

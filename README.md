@@ -21,8 +21,7 @@ This setup includes:
 ### 1. Clone this repository
 
 ```sh
-git clone https://github.com/szidorpatrik/home-server.git \
-cd home-server
+git clone https://github.com/szidorpatrik/home-server.git && cd home-server
 ```
 
 ### 2. Create Directory Structure
@@ -37,27 +36,20 @@ mkdir -p caddy/{certs,config,data} \
          unbound/{dev,var}
 ```
 
+Update unbound dir permissions (for root.key):
+
+```bash
+sudo chown -R $USER:$USER unbound/
+chmod -R 775 unbound/
+```
+
 ### 3. Pull the containers
 
 ```sh
 docker compose pull
 ```
 
-### 4. Run pihole
-
-Without internet access, it can't download it's gravity file.
-
-```sh
-docker compose up -d pihole
-```
-
-If you can access pihole dashboard at `http:<server-ip>:8888`, with password in the `.env` file remove the container:
-
-```sh
-docker compose down pihole
-```
-
-### 5. Environment Variables
+### 4. Environment Variables
 
 Create the `.env` file from the example.
 
@@ -68,12 +60,16 @@ cp .env-example .env
 **Modify `.env`:**
 Open `.env` and configure the following:
 
-- `SEARXNG_HOSTNAME`: Your domain for search (e.g., `search.mydomain.lan`).
-- `FTLCONF_webserver_api_password`: Set a strong password for the Pi-hole admin panel.
-- `NEXTCLOUD_DATADIR`: Path on your host where Nextcloud files will be stored.
-- `JELLYFIN_MEDIA_DIR`: Path to your media library (e.g. path/to/nextcloud/user/files/jellyfin).
+| Variable | Description |
+| --- | --- |
+| **`FTLCONF_dns_hosts`** | **Crucial:** Change `192.168.1.x` to your server's actual static IP (**No spaces between `;`**). |
+| **`FTLCONF_dns_revServers`** | Update `192.168.1.1` to your router's IP and check if your subnet is `/24`. |
+| **`FTLCONF_webserver_api_password`** | Your admin password for the Pi-hole dashboard. |
+| **`SEARXNG_HOSTNAME`** | The local domain used in your Caddyfile for the search engine. |
+| **`NEXTCLOUD_DATADIR`** | The absolute path on your host where Nextcloud data will persist. |
+| **`JELLYFIN_MEDIA_DIR`** | The host path where your movies/shows are stored (e.g., inside your Nextcloud user data). |
 
-### 6. Caddy Configuration (Choose One)
+### 5. Caddy Configuration (Choose One)
 
 Choose the mode that fits your network setup.
 
@@ -87,7 +83,8 @@ cp caddy/Caddyfile-example caddy/Caddyfile
 
 **Modify `caddy/Caddyfile`:**
 
-- Replace `search.example.lan`, `pihole.example.lan`, etc., with your actual domains.
+- Ensure the site block addresses (e.g., `nextcloud.example.lan`) match exactly what you defined in the FTLCONF_dns_hosts variable in your .env file.
+- Create a self signed certificate or use one if you already have it. (`*.example.lan` is expected in this config).
 - Update the `(local_tls)` snippet path to point to your certificates, or remove it to use Let's Encrypt.
 
 #### Option B: HTTP Only (Local/Testing)
@@ -100,9 +97,9 @@ cp caddy/Caddyfile-example-http caddy/Caddyfile
 
 **Modify `caddy/Caddyfile`:**
 
-- Replace `http://search.example.lan` with your local IP or internal domains, which can be set in pihole's local dns records.
+- Ensure the site block addresses (e.g., `http://nextcloud.example.lan`) match exactly what you defined in the FTLCONF_dns_hosts variable in your .env file.
 
-### 7. Service Configuration
+### 6. Service Configuration
 
 #### SearXNG
 
@@ -116,17 +113,24 @@ cp searxng/settings.yml-example searxng/settings.yml
 
 - Ensure the `secret_key` is unique.
 
-#### Unbound DNS
+### 7. Update resolved.conf
 
-The configuration file is located at `unbound/unbound.conf`.
+Update /etc/systemd/resolved.conf, so that it contains these:
 
-**Action Required:**
+```conf
+DNS=127.0.0.1 1.1.1.1   # <- Loobpack (to pihole) and some external DNS (e.g. Cloudflare)
+FallbackDNS=192.168.1.1 # <- Fallback to router if nothing works
+DNSStubListener=no      # <- Stop systemd-resolved from binding port 53
+```
 
-- Download the root hints file (required for recursive DNS):
+Run this to restart systemd-resolved and create a symlink.
 
 ```bash
-curl -o unbound/root.hints https://www.internic.net/domain/named.root
+sudo systemctl restart systemd-resolved
+sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
 ```
+
+This way even when pihole or unbound is down the server itself can resolve DNS and access the internet.
 
 ### 8. Start the Stack
 
@@ -134,45 +138,30 @@ curl -o unbound/root.hints https://www.internic.net/domain/named.root
 docker compose up -d
 ```
 
-## Post-Install
+### 9. Pi-hole
 
-### Pi-hole
+- Log into Pi-hole (`http://<server-ip>:8888/admin/`) using the password set in `.env`.
+- Check the settings if they have been applied correctly:
+  - Settings > DNS:
+    - Custom DNS server
+    - Domain
+    - Conditional forwarding
+  - Settings > Local DNS Records
+    - Local DNS records
 
-- Log into Pi-hole (`http://<server-ip>:8888/admin`) using the password set in `.env`.
-- Set up your DNS records at `Settings > Local DNS Records`.
-- Configure your router to have DHCP clients use Pi-hole as their DNS server.
-- Pi-hole should be pre-configured to use Unbound as its upstream DNS.
-  - Check DNS (Expert toggle) > Custom DNS servers, set it to `unbound#53`.
-  - Set Conditional forwarding: `true,<subnet/mask>,<router ip>` (e.g. `true,192.168.1.0/24,192.168.1.1`)
-- Remove/Comment out `'8888:8888'` line from pihole in [compose.yml](./compose.yml) then run:
+### 10. Nextcloud AIO
 
-    ```sh
-    docker compose up -d
-    ```
+- Access the setup interface at `https://<server-ip>:8080`.
+- **Important:** Ensure you enter the correct domain in the AIO interface that matches in the Caddyfile.
+- The initial installation can take quite a bit.
+- You should see at the top the username and password for the admin, use it to log into nextcloud at `https://nextcloud.example.lan/`
 
-- Make a copy of your current /etc/resolv.conf:
+### 11. Jellyfin
 
-    ```sh
-    sudo cp /etc/resolv.conf /etc/resolv.conf.old
-    ```
+- If your TV does not support your self-signed certificate, bypass the proxy by exposing the port directly. \
+Access it via `http://<server-ip>:8096`
 
-- Edit /etc/resolv.conf so that it contains the ip of your server and nothing more:
-
-    ```sh
-    nameserver 192.168.1.128 # <- This server's IP
-    ```
-
-- You should be able to access pihole at `https://pihole.example.lan/`.
-
-### Nextcloud AIO
-
-- Access the setup interface at `https://<your-ip>:8080`.
-- Because `SKIP_DOMAIN_VALIDATION=true` is set, you can configure it using your internal domain.
-- **Important:** Ensure you enter the correct domain in the AIO interface that matches your Caddyfile.
-
-### Jellyfin
-
-- If you can't install your self signed cert on your smart tv, uncomment (remove `#`)
+- Update [compose.yml](./compose.yml):
 
     Before:
 
@@ -188,8 +177,27 @@ docker compose up -d
       - '8096:8096'
     ```
 
-    Run, then access it at `http://jellyfin.example.lan:8096` or `http:<server-ip>:8096`
+- Update the containers:
 
     ```sh
     docker compose up -d
     ```
+
+### 12. Post-install
+
+- Configure your router to have DHCP clients use Pi-hole (server-ip) as their DNS server.
+- Comment out `'8888:8888'` line under `pihole` in [compose.yml](./compose.yml)
+- Comment out `'8080:8080'` line under `nextcloud-aio-mastercontainer` in [compose.yml](./compose.yml) after initial installation and setup (optional containers, adding users etc.)
+- Run this to apply the changes:
+
+    ```sh
+    docker compose up -d
+    ```
+
+### 13. Testing
+
+Run these commands from a different computer on the same network:
+
+1. **Verify DNS Filtering:** `nslookup doubleclick.net <server-ip>` (Should return `0.0.0.0`)
+2. **Verify Recursive Resolution:** `nslookup google.com <server-ip>` (Should return a valid IP)
+3. **Verify Local Domains:** `curl -I http://nextcloud.example.lan` (Should return a 200 or 301 status from Caddy)
