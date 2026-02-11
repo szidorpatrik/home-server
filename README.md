@@ -139,8 +139,24 @@ rrset-cache-size: 256m
 msg-cache-size: 128m
 
 # Security
-domain-insecure: "szipat.lan"
+domain-insecure: "example.lan"
 domain-insecure: "lan"
+```
+
+#### Caddy
+
+For HTTP3/QUIC performance, better network reliability and less warnings in logs, increase max allowed buffer size to 16MB:
+
+```bash
+sudo sysctl -w net.core.rmem_max=16777216
+sudo sysctl -w net.core.wmem_max=16777216
+```
+
+To make it permanent, add these lines to the bottom of `/etc/sysctl.conf`:
+
+```bash
+echo "net.core.rmem_max=16777216" | sudo tee -a /etc/sysctl.conf
+echo "net.core.wmem_max=16777216" | sudo tee -a /etc/sysctl.conf
 ```
 
 ### 7. Update resolved.conf
