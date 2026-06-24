@@ -15,6 +15,8 @@ services:
     volumes:
       - nextcloud_aio_mastercontainer:/mnt/docker-aio-config
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    devices:
+      - /dev/dri:/dev/dri
     networks:
       - pihole_network
 
