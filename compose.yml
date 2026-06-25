@@ -39,6 +39,7 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - pihole_network
+      - nextcloud-aio
 
   unbound:
     container_name: unbound
@@ -131,3 +132,7 @@ networks:
   pihole_network:
     name: pihole_network
     driver: bridge
+
+  nextcloud-aio:
+    name: nextcloud-aio
+    external: true
